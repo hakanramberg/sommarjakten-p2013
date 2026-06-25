@@ -36,6 +36,7 @@ const exercises = [
   {
     id: "skater",
     name: "Skridskohopp",
+    icon: "↔",
     points: 25,
     category: "Sidled",
     reps: "3 x 8 per sida",
@@ -45,6 +46,7 @@ const exercises = [
   {
     id: "line-jumps",
     name: "Linjehopp",
+    icon: "▦",
     points: 20,
     category: "Fotarbete",
     reps: "3 x 20 sek",
@@ -54,6 +56,7 @@ const exercises = [
   {
     id: "vertical-jumps",
     name: "Upphopp",
+    icon: "↑",
     points: 25,
     category: "Spänst",
     reps: "3 x 6",
@@ -63,6 +66,7 @@ const exercises = [
   {
     id: "defense-steps",
     name: "Försvarssteg",
+    icon: "▣",
     points: 20,
     category: "Handboll",
     reps: "4 x 20 sek",
@@ -72,6 +76,7 @@ const exercises = [
   {
     id: "explosive-starts",
     name: "Explosiva starter",
+    icon: "»",
     points: 20,
     category: "Snabbhet",
     reps: "6 x 10 m",
@@ -81,6 +86,7 @@ const exercises = [
   {
     id: "single-leg-jumps",
     name: "Enbenshopp",
+    icon: "1",
     points: 30,
     category: "Balans",
     reps: "3 x 5 per ben",
@@ -132,9 +138,16 @@ function cacheElements() {
     "heroTeamScore",
     "leaderboardList",
     "leaderboardSource",
+    "passMission",
+    "passRecentSessions",
+    "passTeamGoalProgress",
+    "passTeamGoalText",
+    "passTeamScoreLine",
+    "passWeeklySpotlight",
     "profilePlayer",
     "playerRecentSessions",
     "playerSummary",
+    "quickRegistration",
     "refreshLeaderboard",
     "saveStatus",
     "selectedExerciseCount",
@@ -145,6 +158,12 @@ function cacheElements() {
     "sessionPlayer",
     "sessionBonusSummary",
     "sessionScore",
+    "sideBadgeStrip",
+    "sideProfileCard",
+    "sideTeamGoalProgress",
+    "sideTeamGoalText",
+    "sideTeamScore",
+    "developmentChart",
     "teamGoalProgress",
     "teamGoalText",
     "weeklySpotlight",
@@ -162,6 +181,10 @@ function wireEvents() {
   el.sessionForm.addEventListener("submit", saveSession);
   el.refreshLeaderboard.addEventListener("click", loadLeaderboard);
   el.exportCsv.addEventListener("click", exportVisibleCsv);
+  el.quickRegistration.addEventListener("click", () => {
+    showView("passView");
+    el.sessionPlayer.focus();
+  });
   el.profilePlayer.addEventListener("change", () => {
     localStorage.setItem(STORAGE_KEYS.lastPlayer, el.profilePlayer.value);
     renderPlayerView();
@@ -201,7 +224,9 @@ function renderDailyMission() {
     "Kort och smart slår långt och aldrig: välj en övning och håll rutinen."
   ];
   const seed = new Date().toISOString().slice(0, 10).split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  el.dailyMission.textContent = missions[seed % missions.length];
+  const mission = missions[seed % missions.length];
+  if (el.dailyMission) el.dailyMission.textContent = mission;
+  if (el.passMission) el.passMission.textContent = mission;
 }
 
 function renderExercises() {
@@ -214,6 +239,7 @@ function renderExercises() {
     button.setAttribute("aria-pressed", "false");
     button.innerHTML = `
       <div class="exercise-card__top">
+        <span class="exercise-icon" aria-hidden="true">${exercise.icon}</span>
         <div>
           <h3>${exercise.name}</h3>
           <p>${exercise.description}</p>
@@ -452,9 +478,55 @@ function buildLeaderboardFromSessions(sessions) {
 }
 
 function renderAllViews() {
+  renderPassDashboard();
   renderLeaderboardView();
   renderPlayerView();
   renderCoachView();
+}
+
+function renderPassDashboard() {
+  const teamScore = getTeamScore();
+  const progress = Math.min(100, Math.round((teamScore / TEAM_GOAL) * 100));
+  const weeklyWinner = state.weeklyLeaderboard[0] || state.leaderboard[0];
+
+  if (el.passTeamGoalText) el.passTeamGoalText.textContent = `${progress}%`;
+  if (el.passTeamGoalProgress) el.passTeamGoalProgress.style.width = `${progress}%`;
+  if (el.passTeamScoreLine) {
+    el.passTeamScoreLine.innerHTML = `<strong>${formatNumber(teamScore)}</strong> / ${formatNumber(TEAM_GOAL)} poäng`;
+  }
+  if (el.sideTeamScore) el.sideTeamScore.textContent = `${formatNumber(teamScore)} / ${formatNumber(TEAM_GOAL)} poäng`;
+  if (el.sideTeamGoalText) el.sideTeamGoalText.textContent = `${progress}%`;
+  if (el.sideTeamGoalProgress) el.sideTeamGoalProgress.style.width = `${progress}%`;
+
+  if (el.passWeeklySpotlight) {
+    el.passWeeklySpotlight.innerHTML = weeklyWinner
+      ? `
+        <div class="weekly-card__inner">
+          <div class="avatar-bubble">${getInitials(weeklyWinner.name)}</div>
+          <div>
+            <p class="section-kicker">Veckans spelare</p>
+            <h2>${weeklyWinner.name}</h2>
+            <p>${weeklyWinner.score} poäng den här veckan</p>
+          </div>
+          <div class="rank-medal">1</div>
+        </div>
+      `
+      : `
+        <div class="weekly-card__inner">
+          <div class="avatar-bubble">HK</div>
+          <div>
+            <p class="section-kicker">Veckans spelare</p>
+            <h2>Första passet väntar</h2>
+            <p>Registrera ett pass och ta ledningen.</p>
+          </div>
+          <div class="rank-medal">1</div>
+        </div>
+      `;
+  }
+
+  if (el.passRecentSessions) {
+    el.passRecentSessions.innerHTML = renderSessionRows(getLocalSessions().slice(0, 3));
+  }
 }
 
 function renderLeaderboardView() {
@@ -517,6 +589,51 @@ function renderPlayerView() {
 
   const sessions = getLocalSessions().filter((session) => session.playerName === selectedPlayer).slice(0, 5);
   el.playerRecentSessions.innerHTML = renderSessionRows(sessions);
+
+  renderSideProfile(selectedPlayer, score, level, progress, badges);
+}
+
+function renderSideProfile(playerName, score, level, progress, badges) {
+  const sessions = getLocalSessions().filter((session) => session.playerName === playerName);
+  const passCount = sessions.length;
+  const minutesPerPass = passCount ? 30 : 0;
+  const streak = getLocalStreak(sessions);
+
+  if (el.sideProfileCard) {
+    el.sideProfileCard.innerHTML = `
+      <div class="profile-card__top">
+        <div class="avatar-bubble">${getInitials(playerName)}</div>
+        <div>
+          <h2>${playerName}</h2>
+          <p class="row-subtitle">${level.name} · ${level.next ? `${score} / ${level.next} XP` : `${score} XP`}</p>
+          <div class="progress-track" aria-label="Profilprogress">
+            <span style="width:${progress}%"></span>
+          </div>
+        </div>
+        <div class="level-badge">${level.name === "Legend" ? "L" : Math.max(1, levels.findIndex((item) => item.name === level.name) + 1)}</div>
+      </div>
+      <div class="profile-stats">
+        <div class="profile-stat"><strong>${passCount}</strong><span>Pass</span></div>
+        <div class="profile-stat"><strong>${formatNumber(score)}</strong><span>Poäng</span></div>
+        <div class="profile-stat"><strong>${minutesPerPass}</strong><span>Min/pass</span></div>
+        <div class="profile-stat"><strong>${streak}</strong><span>Streak</span></div>
+      </div>
+    `;
+  }
+
+  if (el.sideBadgeStrip) {
+    const badgeCatalog = ["Jump Master", "Speedster", "Full pott", "Försvarsgeneral", "Summer Hero"];
+    el.sideBadgeStrip.innerHTML = badgeCatalog.map((badge, index) => `
+      <div class="shield-badge ${badges.includes(badge) ? "" : "is-locked"}">
+        <span class="shield" style="--shield-color:${getBadgeColor(badge, index)}">${getBadgeSymbol(badge)}</span>
+        <span>${badge}</span>
+      </div>
+    `).join("");
+  }
+
+  if (el.developmentChart) {
+    el.developmentChart.innerHTML = renderDevelopmentChart(playerName);
+  }
 }
 
 function renderCoachView() {
@@ -582,6 +699,99 @@ function getPlayerBadges(playerName, score) {
     .flatMap((session) => session.badges || []);
   return uniqueList([...getMilestoneBadges(score), ...localBadges])
     .filter((badge) => ["Speedster", "Jump Master", "Summer Hero", "Legend", "Försvarsgeneral", "Full pott", "Bra pass", "Stort pass"].includes(badge));
+}
+
+function getInitials(name) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getBadgeColor(badge, index) {
+  const colors = {
+    "Jump Master": "#6d35d8",
+    Speedster: "#0573d8",
+    "Försvarsgeneral": "#0b7b2a",
+    "Full pott": "#f25216",
+    "Summer Hero": "#7b818a",
+    Legend: "#151515",
+    "Bra pass": "#e30613",
+    "Stort pass": "#f7b731"
+  };
+  return colors[badge] || ["#6d35d8", "#0573d8", "#f25216", "#0b7b2a", "#7b818a"][index % 5];
+}
+
+function getBadgeSymbol(badge) {
+  if (badge === "Speedster") return "»";
+  if (badge === "Försvarsgeneral") return "▣";
+  if (badge === "Full pott") return "6";
+  if (badge === "Legend") return "L";
+  if (badge === "Summer Hero") return "★";
+  if (badge === "Stort pass") return "5";
+  if (badge === "Bra pass") return "3";
+  return "↗";
+}
+
+function getLocalStreak(sessions) {
+  if (!sessions.length) return 0;
+  const days = new Set(sessions
+    .filter((session) => session.clientTimestamp)
+    .map((session) => new Date(session.clientTimestamp).toISOString().slice(0, 10)));
+  if (!days.size) return 0;
+  let streak = 0;
+  const cursor = new Date();
+
+  while (days.has(cursor.toISOString().slice(0, 10))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
+function renderDevelopmentChart(playerName) {
+  const days = [];
+  const now = new Date();
+  const sessions = getLocalSessions().filter((session) => session.playerName === playerName);
+
+  for (let index = 6; index >= 0; index -= 1) {
+    const date = new Date(now);
+    date.setDate(now.getDate() - index);
+    const key = date.toISOString().slice(0, 10);
+    const score = sessions
+      .filter((session) => session.clientTimestamp && session.clientTimestamp.slice(0, 10) === key)
+      .reduce((sum, session) => sum + (Number(session.score) || 0), 0);
+    days.push({
+      label: new Intl.DateTimeFormat("sv-SE", { weekday: "short" }).format(date),
+      score
+    });
+  }
+
+  const maxScore = Math.max(100, ...days.map((day) => day.score));
+  const points = days.map((day, index) => {
+    const x = 16 + index * 46;
+    const y = 118 - (day.score / maxScore) * 92;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return `
+    <svg viewBox="0 0 310 150" role="img" aria-label="Poäng senaste veckan">
+      <g stroke="#e8e8ec" stroke-width="1">
+        <line x1="16" y1="26" x2="292" y2="26"></line>
+        <line x1="16" y1="72" x2="292" y2="72"></line>
+        <line x1="16" y1="118" x2="292" y2="118"></line>
+      </g>
+      <polyline points="${points}" fill="none" stroke="#e30613" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+      ${days.map((day, index) => {
+        const x = 16 + index * 46;
+        const y = 118 - (day.score / maxScore) * 92;
+        return `<circle cx="${x}" cy="${y}" r="5" fill="#e30613"></circle><text x="${x}" y="144" text-anchor="middle" font-size="11" fill="#676a72">${day.label}</text>`;
+      }).join("")}
+    </svg>
+  `;
 }
 
 function burstConfetti() {

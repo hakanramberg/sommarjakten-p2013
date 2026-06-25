@@ -39,53 +39,142 @@
 
     <main>
       <section class="view is-active" id="passView" aria-labelledby="passTitle">
-        <div class="mission-card">
-          <div>
-            <p class="section-kicker">Dagens uppdrag</p>
-            <h2 id="passTitle">Kör ett pass och samla poäng</h2>
+        <div class="mockup-grid">
+          <aside class="dashboard-column" aria-label="Sommarjakten översikt">
+            <div class="weekly-card" id="passWeeklySpotlight"></div>
+
+            <div class="panel goal-card">
+              <div class="section-heading section-heading--tight">
+                <div>
+                  <p class="section-kicker">Lagets mål</p>
+                  <h2>20 000 lagpoäng</h2>
+                </div>
+                <strong id="passTeamGoalText">0%</strong>
+              </div>
+              <p class="row-subtitle">Tillsammans når vi målet innan säsongsstart.</p>
+              <div class="progress-track" aria-label="Lagets mål 20000 poäng">
+                <span id="passTeamGoalProgress"></span>
+              </div>
+              <p class="goal-score" id="passTeamScoreLine">0 / 20 000 poäng</p>
+            </div>
+
+            <div class="challenge-tile">
+              <div>
+                <p class="section-kicker">Dagens utmaning</p>
+                <strong id="passMission"></strong>
+              </div>
+              <span>+20</span>
+            </div>
+
+            <button class="quick-card" type="button" id="quickRegistration">
+              <span>+</span>
+              <div>
+                <strong>Snabb registrering</strong>
+                <small>Välj spelare och kör ett pass direkt</small>
+              </div>
+            </button>
+
+            <div class="panel">
+              <div class="section-heading section-heading--tight">
+                <div>
+                  <p class="section-kicker">Senaste pass</p>
+                  <h2>På den här enheten</h2>
+                </div>
+              </div>
+              <div id="passRecentSessions" class="session-list"></div>
+            </div>
+          </aside>
+
+          <div class="register-column">
+            <div class="register-topbar">
+              <span class="runner-mark" aria-hidden="true">↗</span>
+              <h2 id="passTitle">Registrera pass</h2>
+            </div>
+
+            <form class="panel register-panel" id="sessionForm">
+              <div class="form-step">
+                <p class="step-label">1. Välj spelare</p>
+                <div class="field">
+                  <label for="sessionPlayer">Spelare</label>
+                  <select id="sessionPlayer" name="playerName" required>
+                    <option value="">Välj spelare</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-step">
+                <div class="section-heading section-heading--tight">
+                  <div>
+                    <p class="step-label">2. Välj övning</p>
+                    <h2>Välj 1-6 övningar</h2>
+                  </div>
+                  <span id="selectedExerciseCount">0 valda</span>
+                </div>
+                <div class="exercise-grid" id="exerciseGrid"></div>
+              </div>
+
+              <div class="score-panel" aria-live="polite">
+                <div>
+                  <span class="score-panel__number" id="sessionScore">0</span>
+                  <span class="score-panel__label">poäng</span>
+                </div>
+                <div class="score-panel__meta">
+                  <strong id="sessionExerciseSummary">Inga övningar valda</strong>
+                  <span id="sessionBonusSummary">Bonusbadges visas här.</span>
+                </div>
+              </div>
+
+              <div class="badge-strip" id="sessionBadges" aria-label="Bonusbadges"></div>
+
+              <div class="form-step">
+                <p class="step-label">3. Kommentar</p>
+                <div class="field">
+                  <label for="sessionNotes">Kommentar, valfritt</label>
+                  <textarea id="sessionNotes" name="notes" maxlength="240" placeholder="Hur kändes passet?"></textarea>
+                </div>
+              </div>
+
+              <button class="primary-action" type="submit">Spara pass</button>
+              <p class="save-status" id="saveStatus" role="status" aria-live="polite"></p>
+            </form>
           </div>
-          <p id="dailyMission"></p>
+
+          <aside class="profile-column" aria-label="Spelarprofil">
+            <div class="profile-card" id="sideProfileCard"></div>
+
+            <div class="panel">
+              <div class="section-heading section-heading--tight">
+                <div>
+                  <p class="section-kicker">Dina badges</p>
+                  <h2>Upplåsta märken</h2>
+                </div>
+              </div>
+              <div class="shield-grid" id="sideBadgeStrip"></div>
+            </div>
+
+            <div class="panel">
+              <div class="section-heading section-heading--tight">
+                <div>
+                  <p class="section-kicker">Din utveckling</p>
+                  <h2>Senaste veckan</h2>
+                </div>
+              </div>
+              <div id="developmentChart" class="mini-chart"></div>
+            </div>
+
+            <div class="panel side-progress">
+              <div>
+                <p class="section-kicker">Lagets framsteg</p>
+                <strong id="sideTeamScore">0 / 20 000 poäng</strong>
+              </div>
+              <span id="sideTeamGoalText">0%</span>
+              <div class="progress-track" aria-label="Lagets framsteg">
+                <span id="sideTeamGoalProgress"></span>
+              </div>
+              <p class="row-subtitle">Tillsammans är vi starka.</p>
+            </div>
+          </aside>
         </div>
-
-        <form class="panel" id="sessionForm">
-          <div class="field">
-            <label for="sessionPlayer">Spelare</label>
-            <select id="sessionPlayer" name="playerName" required>
-              <option value="">Välj spelare</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="sessionNotes">Kommentar</label>
-            <textarea id="sessionNotes" name="notes" maxlength="240" placeholder="Frivilligt: hur kändes passet?"></textarea>
-          </div>
-
-          <div class="section-heading">
-            <div>
-              <p class="section-kicker">Övningar</p>
-              <h2>Välj 1-6 övningar</h2>
-            </div>
-            <span id="selectedExerciseCount">0 valda</span>
-          </div>
-
-          <div class="exercise-grid" id="exerciseGrid"></div>
-
-          <div class="score-panel" aria-live="polite">
-            <div>
-              <span class="score-panel__number" id="sessionScore">0</span>
-              <span class="score-panel__label">poäng</span>
-            </div>
-            <div class="score-panel__meta">
-              <strong id="sessionExerciseSummary">Inga övningar valda</strong>
-              <span id="sessionBonusSummary">Bonusbadges visas här.</span>
-            </div>
-          </div>
-
-          <div class="badge-strip" id="sessionBadges" aria-label="Bonusbadges"></div>
-
-          <button class="primary-action" type="submit">Spara pass</button>
-          <p class="save-status" id="saveStatus" role="status" aria-live="polite"></p>
-        </form>
       </section>
 
       <section class="view" id="leaderboardView" aria-labelledby="leaderboardTitle">
